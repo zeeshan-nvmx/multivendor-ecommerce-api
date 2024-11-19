@@ -4,7 +4,7 @@ const validateStore = async (req, res, next) => {
   try {
 
      console.log('Form Data:', req.body)
-    const storeId = req.body.storeId
+    const storeId = req.body.storeId || req.params.id
     
 
     if (!storeId) {

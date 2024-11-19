@@ -6,13 +6,14 @@ const auth = require('../middleware/auth')
 const validateStore = require('../middleware/validateStore')
 const { authorizeStore } = require('../middleware/storeAuthorization')
 const { createStore, updateStore, getStores, getStoreById, deleteStore, manageStaffRole, removeStaffRole, getStoreStaff } = require('../controllers/storeController')
+const authorizeRoles = require('../middleware/roleAuthorization')
 
 // Public routes
 router.get('/', getStores)
 router.get('/:id', getStoreById)
 
 // Protected routes
-router.post('/', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), createStore)
+router.post('/', auth, authorizeRoles('admin', 'superadmin'), upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), createStore)
 
 router.put(
   '/:id',

@@ -2,49 +2,99 @@ const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/cl
 
 const s3 = new S3Client({
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
   },
-  region: process.env.AWS_REGION,
-  endpoint: process.env.AWS_ENDPOINT,
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
 })
 
 const uploadToS3 = async (file, key) => {
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-    Body: file.buffer,
-    ContentType: file.mimetype,
-  }
+  console.log('Starting upload with params:', {
+    bucket: process.env.R2_BUCKET_NAME,
+    key,
+    contentType: file.mimetype,
+  })
 
   try {
-    await s3.send(new PutObjectCommand(params))
+    
+    const uploadParams = {
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    }
 
-    const publicUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.backblazeb2.com/${key}`
+    const result = await s3.send(new PutObjectCommand(uploadParams))
+    console.log('Upload result:', result)
+
+    // Construct the public URL using the R2 public domain
+    const publicUrl = `https://${process.env.R2_PUBLIC_DOMAIN}/${key}`
+    console.log('Generated public URL:', publicUrl)
+
     return publicUrl
-
   } catch (err) {
-    console.error('Error uploading file to S3:', err)
+    console.error('R2 Upload Error Details:', {
+      error: err.message,
+      code: err.Code,
+      requestId: err.$metadata?.requestId,
+      statusCode: err.$metadata?.httpStatusCode,
+      bucket: process.env.R2_BUCKET_NAME,
+      key,
+      credentials: {
+        accessKeyIdPresent: !!process.env.R2_ACCESS_KEY_ID,
+        secretKeyPresent: !!process.env.R2_SECRET_ACCESS_KEY,
+        accountIdPresent: !!process.env.R2_ACCOUNT_ID,
+      },
+    })
     throw err
   }
 }
 
 const deleteFromS3 = async (key) => {
-  const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
-    Key: key,
-  }
-
   try {
-    await s3.send(new DeleteObjectCommand(params))
+    const deleteParams = {
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: key,
+    }
+
+    await s3.send(new DeleteObjectCommand(deleteParams))
+    console.log('Successfully deleted:', key)
   } catch (err) {
-    console.error('Error deleting file from S3:', err)
+    console.error('Delete error:', err)
     throw err
+  }
+}
+
+// Add this function to test connectivity
+const testR2Connection = async () => {
+  try {
+    const testKey = `test-${Date.now()}.txt`
+    const testParams = {
+      Bucket: process.env.R2_BUCKET_NAME,
+      Key: testKey,
+      Body: 'test connection',
+      ContentType: 'text/plain',
+      CacheControl: 'no-cache',
+      Metadata: {
+        'public-access': 'true',
+      },
+    }
+
+    await s3.send(new PutObjectCommand(testParams))
+    console.log('Test upload successful')
+
+    // Clean up test file
+    await deleteFromS3(testKey)
+    return true
+  } catch (error) {
+    console.error('Connection test failed:', error)
+    return false
   }
 }
 
 module.exports = {
   uploadToS3,
   deleteFromS3,
+  testR2Connection,
 }
-
