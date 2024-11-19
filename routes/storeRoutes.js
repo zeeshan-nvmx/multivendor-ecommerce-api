@@ -12,15 +12,7 @@ router.get('/', getStores)
 router.get('/:id', getStoreById)
 
 // Protected routes
-router.post(
-  '/',
-  auth,
-  upload.fields([
-    { name: 'logo', maxCount: 1 },
-    { name: 'banner', maxCount: 1 },
-  ]),
-  createStore
-)
+router.post('/', auth, upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'banner', maxCount: 1 }]), createStore)
 
 router.put(
   '/:id',

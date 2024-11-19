@@ -100,16 +100,15 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 // Request parsing and compression
-app.use(express.json({ limit: '10kb' }))
-app.use(express.urlencoded({ extended: true, limit: '10kb' }))
+app.use(express.json())
 app.use(compression())
 
 // Correlation ID middleware
-app.use((req, res, next) => {
-  req.correlationId = req.headers['x-correlation-id'] || uuidv4()
-  res.setHeader('x-correlation-id', req.correlationId)
-  next()
-})
+// app.use((req, res, next) => {
+//   req.correlationId = req.headers['x-correlation-id'] || uuidv4()
+//   res.setHeader('x-correlation-id', req.correlationId)
+//   next()
+// })
 
 // Secure request logging middleware
 app.use((req, res, next) => {
@@ -146,7 +145,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authLimiter, require('./routes/authRoutes'))
 app.use('/api/stores', require('./routes/storeRoutes'))
-// app.use('/api/categories', require('./routes/categoryRoutes'))
+app.use('/api/categories', require('./routes/categoryRoutes'))
 // app.use('/api/products', require('./routes/productRoutes'))
 // app.use('/api/orders', require('./routes/orderRoutes'))
 

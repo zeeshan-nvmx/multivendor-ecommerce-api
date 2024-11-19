@@ -2,7 +2,10 @@ const Store = require('../models/Store')
 
 const validateStore = async (req, res, next) => {
   try {
-    const storeId = req.headers['x-store-id'] || req.query.storeId || req.body.storeId
+
+     console.log('Form Data:', req.body)
+    const storeId = req.body.storeId
+    
 
     if (!storeId) {
       return res.status(400).json({ message: 'Store ID is required' })
