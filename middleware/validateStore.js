@@ -3,8 +3,9 @@ const Store = require('../models/Store')
 const validateStore = async (req, res, next) => {
   try {
 
-     console.log('Form Data:', req.body)
-    const storeId = req.body.storeId || req.params.id
+    console.log(`request storeId is: ${req.body.storeId}`)
+
+    const storeId = req.body.storeId || req.params.storeId || req.query.storeId
     
 
     if (!storeId) {
@@ -12,6 +13,8 @@ const validateStore = async (req, res, next) => {
     }
 
     const store = await Store.findById(storeId)
+
+    console.log(store)
 
     if (!store) {
       return res.status(404).json({ message: 'Store not found' })
